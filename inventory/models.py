@@ -77,7 +77,7 @@ class StockTransfer(models.Model):
         related_name='incoming_transfers'
     )
 
-    qauntity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField()
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
