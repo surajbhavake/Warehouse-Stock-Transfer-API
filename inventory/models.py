@@ -18,6 +18,14 @@ class Warehouse(models.Model):
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=200)
 
+    manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='managed_warehouse',
+        null=True,
+        blank=True
+    )
+
     def __str__(self):
         return self.name
 
