@@ -3,9 +3,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import StockTransferSerializer
+from .serializers import (
+    StockTransferSerializer,BatchSerializer,BatchStockSerializer
+)
 from .permissions import IsWarehouseManager
 from .services import transfer_stock
+from .models import Batch,BatchStock
 
 # Create your views here.
 
@@ -33,4 +36,35 @@ class StockTransferView(APIView):
                 'transfer_id':transfer.id,
             },
             status = status.HTTP_201_CREATED
+        )
+
+class BatchListCreateView(APIView):
+    permission_classes = [IsWarehouseManager]
+
+    def get(self,request):
+
+        batches = Batch.objects.select_related('product').all
+
+        serializer = BatchSerializer(
+            batches,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
+    def post(self,request):
+        serializer = BatchSerializer(
+            data = request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+        batch = serializer.save()
+        return Response(
+            BatchSerializer(batch).data,
+            status=status.HTTP_201_CREATED
         )
