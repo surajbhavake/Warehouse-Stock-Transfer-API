@@ -110,4 +110,61 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action}"
-    
+
+
+class Batch(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name='batches'
+    )
+    batch_number = models.CharField(
+        max_length=100
+    )
+    manufacturing_date = models.DateField()
+    expiry_date = models.DateField()
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product','batch_number'],
+                name='unique_product_batch_number'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.batch_number}"
+
+
+
+class BatchStock(models.Model):
+    batch = models.ForeignKey(
+        Batch,
+        on_delete=models.PROTECT,
+        related_name='stock_records'
+    )
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name='batch_stock_records'
+    )
+    quantity = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints =[
+            models.UniqueConstraint(
+                fields=['batch','warehouse'],
+                name='unique_batch_warehouse_stock'
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f'{self.batch}-'
+            f'{self.warehouse}-'
+            f'{self.quantity}'
+        )
