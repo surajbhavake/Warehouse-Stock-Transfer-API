@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import StockTransferView,BatchListCreateView
+from .views import StockTransferView,BatchListCreateView,AddBatchStockView
 
 urlpatterns = [
     path(
@@ -10,4 +10,9 @@ urlpatterns = [
         BatchListCreateView.as_view(),
         name='batch-list-create'
     ),
+    path(
+    'batch-stock/',
+    AddBatchStockView.as_view(),
+    name='add-batch-stock'
+),
 ]
