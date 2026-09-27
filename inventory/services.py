@@ -4,7 +4,9 @@ from rest_framework.exceptions import PermissionDenied
 from .models import(
     Stock,
     StockTransfer,
-    AuditLog
+    AuditLog,
+    BatchStock,
+    Batch
 )
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -84,3 +86,56 @@ def transfer_stock(
         )
 
     return transfer
+
+
+def add_batch_stock(
+        *,
+        user,
+        batch,
+        warehouse,
+        quantity,
+):
+    if quantity <= 0:
+        raise ValidationError(
+            'Qauntity must be greateda than zero'
+        )
+
+    if warehouse.manager != user:
+        raise PermissionDenied(
+            'You do not manage this warehouse'
+        )
+
+    if batch.product.is_active is False:
+        raise ValidationError(
+            'Cannot add stock for an inactivate product'
+        )
+
+    with transaction.atomic():
+        batch_stock,created = (
+            BatchStock.objects.select_for_update()
+            .get_or_create(
+                batch=batch,
+                warehouse = warehouse,
+                defaults={
+                    'quantity': 0
+                }
+            )
+        )
+        batch_stock.quantity +=quantity
+
+        batch_stock.save(
+            update_fields=['quantity']
+        )
+
+        AuditLog.objects.create(
+            user=user,
+            action='BATCH_STOCK_ADDED',
+            description=(
+                f'Added {quantity} units of '
+                f'{batch.product.name} '
+                f'(batch {batch.batch_number}) '
+                f'to {warehouse.name}'
+            )
+        )
+
+        return batch_stock

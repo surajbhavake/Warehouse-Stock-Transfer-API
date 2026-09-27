@@ -127,3 +127,27 @@ class BatchStockSerializer(serializers.ModelSerializer):
             'batch',
             'quantity',
         ]
+
+
+class AddBatchStockSerializer(serializers.Serializer):
+
+    batch = serializers.PrimaryKeyRelatedField(
+        queryset=Batch.objects.select_related(
+            'product'
+        ).all()
+    )
+
+    warehouse = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all()
+    )
+
+    quantity = serializers.IntegerField()
+
+    def validate_quantity(self, value):
+
+        if value <= 0:
+            raise serializers.ValidationError(
+                'Quantity must be greater than zero.'
+            )
+
+        return value
