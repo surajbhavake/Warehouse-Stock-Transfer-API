@@ -35,3 +35,21 @@ class LoginSerializer(serializers.Serializer):
         attrs['access'] = str(refresh.access_token)
 
         return attrs
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate(self, attrs):
+
+        refresh_token = attrs['refresh']
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except Exception:
+            raise serializers.ValidationError(
+                'Invalid or already blacklisted refresh token'
+            )
+
+        return attrs

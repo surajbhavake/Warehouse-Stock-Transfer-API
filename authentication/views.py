@@ -4,8 +4,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
-from .serializers import LoginSerializer
+from rest_framework.permissions import IsAuthenticated
+from .serializers import LoginSerializer,LogoutSerializer
 
 
 class LoginView(APIView):
@@ -33,5 +33,18 @@ class LoginView(APIView):
                     'email':user.email
                 }
             },
+            status=status.HTTP_200_OK
+        )
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self,request):
+        serializer = LogoutSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            {'message':'Logout Successfly'},
             status=status.HTTP_200_OK
         )
