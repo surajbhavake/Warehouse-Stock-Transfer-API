@@ -15,9 +15,19 @@ from .cache import (
     get_product_list_cache,
     set_product_list_cache,
     invalidate_product_list_cache,
+    get_product_detail_cache,
+    set_product_detail_cache,
+    invalidate_product_detail_cache,
+
+
     get_warehouse_list_cache,
     set_warehouse_list_cache,
-    invalidate_warehouse_list_cache
+    invalidate_warehouse_list_cache,
+    get_warehouse_detail_cache,
+    set_warehouse_detail_cache,
+    invalidate_warehouse_detail_cache
+
+    
 )
 
 # Create your views here.
@@ -62,6 +72,163 @@ class ProductListCreateView(APIView):
             ProductSerializer(product).data,
             status=status.HTTP_201_CREATED
         )
+
+
+
+
+class ProductDetailView(APIView):
+    permission_classes = [IsWarehouseManager]
+
+    def get(self,request,pk):
+        cached_product = get_product_detail_cache(pk)
+
+        if cached_product is not None:
+            print('Product detail cache hit ')
+            return Response(
+                cached_product,
+                status=status.HTTP_200_OK
+            )
+
+        print('product detail cache miss')
+
+        try:
+            product = Product.objects.get(
+                pk=pk,
+                is_active=True
+            )
+        except Product.DoesNotExist:
+            return Response(
+                {'detail':'Product not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ProductSerializer(product)
+        data = serializer.data
+
+        set_product_detail_cache(
+            pk,
+            data
+        )
+
+        return Response(
+            data,
+            status=status.HTTP_200_OK
+        )
+
+
+class ProductUpdateView(APIView):
+    permission_classes = [IsWarehouseManager]
+
+    def put (self,request,pk):
+        try:
+            product = Product.objects.get(
+                pk=pk
+            )
+        except Product.DoesNotExist:
+            return Response(
+                {'detail':'Product not found'},
+                status = status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ProductSerializer(
+            product,
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+        product = serializer.save()
+
+        invalidate_product_list_cache()
+
+        invalidate_product_detail_cache(pk)
+
+        return Response(
+            ProductSerializer(product).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class WarehouseDetailView(APIView):
+
+
+    permission_classes = [IsWarehouseManager]
+    def get(self,request,pk):
+
+        cached_warehouse = get_warehouse_detail_cache(pk)
+
+        if cached_warehouse is not None:
+            return Response(
+                cached_warehouse,
+                status=status.HTTP_200_OK
+            )
+        try:
+            warehouse = Warehouse.objects.select_related('manager').get(pk=pk)
+
+        except Warehouse.DoesNotExist:
+            return Response(
+                {'detail':'Warehouse not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = WarehouseSerializer(warehouse)
+
+        data = serializer.data
+
+        set_warehouse_detail_cache(
+            pk,
+            data
+            )
+        return Response(
+            data,
+            status=status.HTTP_200_OK
+        )
+
+
+
+
+class WarehouseUpdateView(APIView):
+
+    permission_classes = [IsWarehouseManager]
+
+    def put(self,request,pk):
+
+        try:
+            warehouse = Warehouse.objects.get(pk=pk)
+        except Warehouse.DoesNotExist:
+                   return Response(
+                       {'detail':'Warehouse not found'},
+                       status=status.HTTP_404_NOT_FOUND
+                   )
+
+        serializer = WarehouseSerializer(
+            warehouse,
+            data=request.data
+        )
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        warehouse = serializer.save()
+
+        invalidate_warehouse_list_cache()
+
+        invalidate_warehouse_detail_cache(pk)
+
+        return Response(
+            WarehouseSerializer(warehouse).data,
+            status=status.HTTP_200_OK
+        )
+
+
+
+
+
+
+
+
+
 
 class WarehouseListCreateView(APIView):
     permission_classes = [IsWarehouseManager]
