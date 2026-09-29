@@ -4,13 +4,109 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .serializers import (
-    StockTransferSerializer,BatchSerializer,BatchStockSerializer,AddBatchStockSerializer
+    StockTransferSerializer,BatchSerializer,BatchStockSerializer,AddBatchStockSerializer,
+    ProductSerializer,WarehouseSerializer,
 )
 from .permissions import IsWarehouseManager
 from .services import transfer_stock,add_batch_stock
-from .models import Batch,BatchStock
+from .models import Batch,BatchStock,Product,Warehouse
+
+from .cache import (
+    get_product_list_cache,
+    set_product_list_cache,
+    invalidate_product_list_cache,
+    get_warehouse_list_cache,
+    set_warehouse_list_cache,
+    invalidate_warehouse_list_cache
+)
 
 # Create your views here.
+
+class ProductListCreateView(APIView):
+    permission_classes = [IsWarehouseManager]
+
+    def get(self,request):
+        cached_products = get_product_list_cache()
+
+        if cached_products is not None:
+            return Response(
+                cached_products,
+                status=status.HTTP_200_OK
+            )
+        products = Product.objects.filter(
+            is_active=True
+        )
+        serializer = ProductSerializer(
+            products,
+            many=True
+        )
+        data = serializer.data
+
+        set_product_list_cache(data)
+
+        return Response(
+            data,
+            status=status.HTTP_200_OK
+        )
+    def post(self,request):
+        serializer = ProductSerializer(
+            data = request.data
+        )
+        serializer.is_valid(
+            raise_exception=True
+        )
+        product = serializer.save()
+        invalidate_product_list_cache()
+
+        return Response(
+            ProductSerializer(product).data,
+            status=status.HTTP_201_CREATED
+        )
+
+class WarehouseListCreateView(APIView):
+    permission_classes = [IsWarehouseManager]
+
+    def get(self,request):
+        cached_warehouse = get_warehouse_list_cache()
+
+        if cached_warehouse is not None:
+            return Response(
+                cached_warehouse,
+                status = status.HTTP_200_OK
+            )
+
+        warehouse = Warehouse.objects.select_related(
+            'manager'
+        ).all()
+
+        serializer = WarehouseSerializer(
+            warehouse,
+            many=True
+        )
+        data = serializer.data
+
+        set_warehouse_list_cache(data)
+
+        return Response(
+            data,
+            status=status.HTTP_200_OK
+        )
+
+    def post(self,request):
+
+        serializer = WarehouseSerializer(
+            data = request.data
+        )
+        serializer.is_valid(
+            raise_exception=True
+        )
+        warehouse = serializer.save()
+        invalidate_warehouse_list_cache()
+
+        return Response(
+            WarehouseSerializer(warehouse).data,
+            status=status.HTTP_201_CREATED
+        )
 
 class StockTransferView(APIView):
     permission_classes = [IsWarehouseManager]
@@ -43,7 +139,7 @@ class BatchListCreateView(APIView):
 
     def get(self,request):
 
-        batches = Batch.objects.select_related('product').all
+        batches = Batch.objects.select_related('product').all()
 
         serializer = BatchSerializer(
             batches,
