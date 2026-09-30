@@ -1,76 +1,108 @@
 from django.core.cache import cache
 
 
-PRODUCT_LIST_CACHE_KEY = "products:list"
+# PRODUCT_LIST_CACHE_KEY = "products:list"
 
-
+#Cache configuration
 CACHE_TIMEOUT = 300
+CACHE_VERSION = 'v2'
+CACHE_NAMESPACE = 'warehouse_api'
+
+
+
+#key builders
+
+
+def product_lsit_key():
+    return(
+        f'{CACHE_NAMESPACE}:'
+        f"{CACHE_VERSION}:"
+        f"products:list"
+    )
+def product_detail_key(product_id):
+    return (
+        f"{CACHE_NAMESPACE}:"
+        f"{CACHE_VERSION}:"
+        f"products:detail:{product_id}"
+    )
+def warehouse_list_key():
+    return (
+        f"{CACHE_NAMESPACE}:"
+        f"{CACHE_VERSION}:"
+        f"warehouses:list"
+    )
+
+
+def warehouse_detail_key(warehouse_id):
+    return (
+        f"{CACHE_NAMESPACE}:"
+        f"{CACHE_VERSION}:"
+        f"warehouses:detail:{warehouse_id}"
+    )
+
+
+
 
 def get_product_list_cache():
-    return cache.get(PRODUCT_LIST_CACHE_KEY)
+    return cache.get(product_lsit_key())
 
 def set_product_list_cache(data):
     cache.set(
-        PRODUCT_LIST_CACHE_KEY,
+        product_lsit_key(),
         data,
         timeout=CACHE_TIMEOUT
     )
 
 def invalidate_product_list_cache():
     cache.delete(
-        PRODUCT_LIST_CACHE_KEY
+        product_lsit_key()
     )
 def get_product_detail_cache(product_id):
-    key = f'products:{product_id}'
-    return cache.get(key)
+    return cache.get(product_detail_key(product_id))
 
 
 def set_product_detail_cache(product_id,data):
-    key = f'products:{product_id}'
+   
     cache.set(
-        key,
+        product_detail_key(product_id),
         data,
         timeout=CACHE_TIMEOUT,
     )
 
 def invalidate_product_detail_cache(product_id):
-    key = f"products:{product_id}"
-    cache.delete(key)
+    cache.delete(product_detail_key(product_id))
 
 
 
 
-WAREHOUSE_LIST_CACHE_KEY ="warehouse:list"
+# WAREHOUSE_LIST_CACHE_KEY ="warehouse:list"
 
 def get_warehouse_list_cache():
     return cache.get(
-        WAREHOUSE_LIST_CACHE_KEY
+        warehouse_list_key()
     )
 def set_warehouse_list_cache(data):
     cache.set(
-        WAREHOUSE_LIST_CACHE_KEY,
+        warehouse_list_key(),
         data,
         timeout=CACHE_TIMEOUT,
     )
 def invalidate_warehouse_list_cache():
     cache.delete(
-        WAREHOUSE_LIST_CACHE_KEY
+        warehouse_list_key()
     )
 
 def get_warehouse_detail_cache(warehouse_id):
-    key = f'warehouses:{warehouse_id}'
 
-    return cache.get(key)
+    return cache.get(warehouse_detail_key(warehouse_id))
 
 def set_warehouse_detail_cache(warehouse_id,data):
-    key = f'warehouses:{warehouse_id}'
 
     cache.set(
-        key,
+        warehouse_detail_key(warehouse_id),
         data,
         timeout=CACHE_TIMEOUT
     )
 def invalidate_warehouse_detail_cache(warehouse_id):
-    key = f'warehouse:{warehouse_id}'
 
-    cache.delete(key)
+    cache.delete(warehouse_detail_key(warehouse_id))

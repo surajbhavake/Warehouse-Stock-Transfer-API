@@ -61,6 +61,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+
+    'DEFAULT_THROTTLE_CLASSES': (
+        'inventory.throttles.WarehouseAnonRateThrottle',
+        'inventory.throttles.WarehouseUserRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'anonymous': '20/minute',
+        'user': '100/minute',
+        'login': '5/minute',
+    },
 }
 
 
